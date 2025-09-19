@@ -1,0 +1,7 @@
+The license used is indicated in each file in the project, but 
+the GPLv3 license generally applies EXCEPT to genome sequences
+(as in examples/*.txt or util/*.fasta or example outputs) 
+which have their sources noted elsewhere and come from government data repositories 
+(and noting that actual organism DNA sequences are not copyrightable by anyone in the US),
+and EXCEPT gradle build tool related build scripts 
+which indicate their own copyright and licensing at the top.
