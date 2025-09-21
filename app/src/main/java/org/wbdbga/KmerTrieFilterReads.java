@@ -186,11 +186,17 @@ public final class KmerTrieFilterReads {
                     ReadSpectralAlignmentResult newResult = checkRead(readIdx);
                     //System.out.println("previously read idx " + readIdx + ", charIdx " + charIdx + " had " + result.numMisalignedKmers + " now it has " + newResult.numMisalignedKmers + " misaligned kmers");
                     if (newResult.numMisalignedKmers < result.numMisalignedKmers - MIN_KMER_BREAKS_REQUIRED_CORRECTED_PER_UPDATE || (newResult.numMisalignedKmers == 0 && result.numMisalignedKmers != 0)) {
-                        bestCharSubstitution = c;
-                        bestNumMisalignedKmers = newResult.numMisalignedKmers;
-                    } else {
+                        // almost always there is at most one option per read position satisfying the condition above (not a good sign if ambiguous),
+                        // but if we have multiple candidate character substitutions satisfying the required improvement condition,
+                        // we can take the best one
+                        if (bestNumMisalignedKmers == null || newResult.numMisalignedKmers < bestNumMisalignedKmers) {
+                            bestCharSubstitution = c;
+                            bestNumMisalignedKmers = newResult.numMisalignedKmers;
+                        }
+                    } 
+                    //else {
                         //System.out.println("read idx " + readIdx + ", charIdx " + charIdx + " -> not enough of an improvement to make a correction");
-                    }
+                    //}
                 }
 
                 this.reads.set(readIdx, oldReadBytes);
@@ -214,17 +220,6 @@ public final class KmerTrieFilterReads {
 
         System.out.println("number spectrally misaligned reads (not amenable to point correction - generally low alignment): " + spectrallyMisalignedReadsToIgnore.size());
         System.out.println("number corrections recommended: " + readCorrectionsToMake.size());
-
-        /**
-         // we need to update our kmer references for this update if the kmer was first encountered on this particular read and is referenced elsewhere. we have not been doing these read removals at this time.
-         int offset = 0;
-         List<Integer> readsToRemove = new ArrayList<Integer>(spectrallyMisalignedReadsToIgnore);
-         Collections.sort(readsToRemove);
-
-         for (Integer misalignedReadToRemove : readsToRemove) {
-         this.reads.remove(misalignedReadToRemove - offset++);
-         }
-        **/
 
         return readCorrectionsToMake;
     }

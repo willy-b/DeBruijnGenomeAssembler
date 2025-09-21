@@ -79,7 +79,6 @@ public final class Contig {
 
         // generate contig sequence
         StringBuilder sb = new StringBuilder("");
-        StringBuilder sb2 = new StringBuilder("");
 
         for (int i = 0; i < this.nodeIndices.size(); i++) {
             int nodeIdx = this.nodeIndices.get(i);

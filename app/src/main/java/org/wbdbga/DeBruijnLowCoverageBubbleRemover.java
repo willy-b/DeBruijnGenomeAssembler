@@ -26,7 +26,7 @@ import java.util.*;
  */
 public final class DeBruijnLowCoverageBubbleRemover {
     DeBruijnGraph dbg;
-    final double RELATIVE_COVERAGE_THRESHOLD_TO_DROP_BUBBLE_EDGES = 0.80;
+    static final double RELATIVE_COVERAGE_THRESHOLD_TO_DROP_BUBBLE_EDGES = 0.80;
     boolean VERBOSE = false;
 
     public DeBruijnLowCoverageBubbleRemover(DeBruijnGraph dbg) {

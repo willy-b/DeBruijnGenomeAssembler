@@ -66,7 +66,8 @@ public class DeBruijnGenomeAssembler {
     }
 
     /**
-       Method that triggers assembly, just make sure readInParameters() is called first. Finds a good value of k and performs assembly if possible, outputting the result to stdout in fasta format labeling contigs.
+       Method that triggers assembly, just make sure readInParameters() is called first. Finds a good value of k and performs assembly if possible, returning a list of contig strings in descending order of length.
+       @return List of assembled contig strings in descending order of contig length. For smaller genomes, the entire assembly may be in the first contig. Usually short contigs less than 500bp at the end can be ignored but are included for completeness.
      */
     public List<String> solve() {
         try {
@@ -131,7 +132,10 @@ public class DeBruijnGenomeAssembler {
     /**
        Run the de Bruijn assembler!
        See the README.md for instructions, but "java -jar ./app/build/libs/app.jar &lt; examples/noisyCarsonellaRuddiiReads.txt" is a working example (after following instructions in ./util/README.md to create examples/noisyCarsonellaRuddiiReads.txt and running "./gradlew build").
-       @param args command line arguments, currently only "--k"/"--kmer_size_starting_guess" is supported
+
+       Outputs the assembled contigs to standard output after showing the assembly process and writes the latest assembly to either "output.fasta" in the current directory or whatever file is specified using the "--output_fasta" argument.
+
+       @param args command line arguments, currently only "--output_fasta","--k", and "--kmer_size_starting_guess" are supported
      */
     public static void main(String[] args) {
         System.out.println("DeBruijnGenomeAssembler Copyright (C) 2025 William Bruns\nThis program is distributed in the hope that it will be useful,\nbut WITHOUT ANY WARRANTY; without even the implied warranty of\nMERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\nGNU General Public License for more details.\nYou should have received a copy of the GNU General Public License\nalong with this program.  If not, see https://www.gnu.org/licenses/.\nThis is free software, and you are welcome to redistribute it\nunder certain conditions, see the GNU General Public License for details.\n");
@@ -155,7 +159,7 @@ public class DeBruijnGenomeAssembler {
                 if (i >= args.length) {
                     throw new IllegalArgumentException("'--kmer_size_starting_guess' must be followed by an integer specifying the kmer size to use, e.g. '--kmer_size_starting_guess 40'");
                 }
-                startingKmerSizeGuess = Integer.valueOf(args[i]);
+                startingKmerSizeGuess = Integer.parseInt(args[i]);
                 if (startingKmerSizeGuess < 1 || startingKmerSizeGuess > 100) {
                     throw new IllegalArgumentException("Overriding the kmer_size_starting_guess must be with an integer between 1 and 100 inclusive");
                 }

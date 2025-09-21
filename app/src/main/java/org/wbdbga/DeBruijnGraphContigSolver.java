@@ -95,7 +95,7 @@ public final class DeBruijnGraphContigSolver {
                 // note we do not check whether we already visited here since these are one-in-one-out nodes so are excluded from nonOneInOneOutNodes
                 // they cannot be visited multiple times as they are one-in-one-out so have only one parent non-one-in-one-out node which we visit once
                 while (otherNodeIdx != null && dbg.outdegree[otherNodeIdx] == 1 && dbg.indegree[otherNodeIdx] == 1) {
-                    if (otherNodeIdx != null && dbg.adjacency[otherNodeIdx] != null && dbg.adjacency[otherNodeIdx].size() > 0) {
+                    if (dbg.adjacency[otherNodeIdx] != null && dbg.adjacency[otherNodeIdx].size() > 0) {
                         otherNodeIdx = dbg.adjacency[otherNodeIdx].get(0);
                         currentPath.add(otherNodeIdx);
                         visitedNode[otherNodeIdx] = true;
@@ -173,7 +173,7 @@ public final class DeBruijnGraphContigSolver {
         // sort descending order of contig length
         Collections.sort(this.contigs, new Comparator<Contig>() {
                 public int compare(Contig a, Contig b) {
-                    return -1 * Integer.valueOf(a.getEdgeLength()).compareTo(Integer.valueOf(b.getEdgeLength()));
+                    return Integer.compare(b.getEdgeLength(), a.getEdgeLength());
                 }
             });
     }

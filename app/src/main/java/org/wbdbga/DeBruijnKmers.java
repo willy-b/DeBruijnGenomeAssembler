@@ -89,7 +89,7 @@ public class DeBruijnKmers {
     /**
        Large genomes with distinct kmer count greater than this are treated differently due to assumptions of lower coverage and potential problems keeping them in memory.
      */
-    final int LARGE_GENOME_KMER_THRESHOLD = 5000000;
+    static final int LARGE_GENOME_KMER_THRESHOLD = 5000000;
 
     // two flags to control during unit testing
     // sometimes we need to disable trie corrections to allow errors through when setting up unit tests for other parts of the code
@@ -244,8 +244,8 @@ public class DeBruijnKmers {
     private void recomputeTotalAndAverageKmerReadCoverage() {
         totalReadCoverageForKmers = 0;
 
-        for (ValueComparedByteArray kmer : kmerCoverageMap.keySet()) {
-            totalReadCoverageForKmers += (int)kmerCoverageMap.get(kmer);
+        for (Map.Entry<ValueComparedByteArray, Byte> kmerCoverageEntry : kmerCoverageMap.entrySet()) {
+            totalReadCoverageForKmers += (int)kmerCoverageEntry.getValue();
         }
 
         int numDistinctKmers = kmerCoverageMap.keySet().size();
@@ -262,11 +262,13 @@ public class DeBruijnKmers {
         List<ValueComparedByteArray> kmersToRemove = new LinkedList<ValueComparedByteArray>();
 
         boolean largeGenomeKmerThresholdReached = false;
-        if (kmerCoverageMap.keySet().size() > LARGE_GENOME_KMER_THRESHOLD) {
+        int kmerCoverageMapKmerCount = kmerCoverageMap.keySet().size();
+        if (kmerCoverageMapKmerCount > LARGE_GENOME_KMER_THRESHOLD) {
             largeGenomeKmerThresholdReached = true;
         }
-
-        for (ValueComparedByteArray kmer : kmerCoverageMap.keySet()) {
+        
+        for (Map.Entry<ValueComparedByteArray, Byte> kmerCoverageEntry : kmerCoverageMap.entrySet()) {
+            ValueComparedByteArray kmer = kmerCoverageEntry.getKey();
             // TODO make the minimum threshold here configurable as this may be something that prevents certain datasets from being assembled due to being too aggressive
             // someone who is not getting decent sized contigs should be able to turn this off / make this less aggressive to see if that fixes their problem.
             int threshold = (int)Math.min(averageReadCoverageForKmers / 4, 6); // was experimenting with being very aggressive on dropping kmers before the final round (when the reduced kmer pool is used for kmer spectral alignment). however it caused a disconnected de bruijn graph (11K nodes out of 5,062,927 nodes), per my current threshold. I ran it with this aggressive mode again and raised the imbalance node threshold and checked the contigs. There was not an improvement there, so I set this threshold lower and for large genomes just use threshold 1.
@@ -282,11 +284,11 @@ public class DeBruijnKmers {
                 threshold = 1;
             }
 
-            if (kmerCoverageMap.get(kmer) <= Byte.valueOf((byte)Math.max(1, threshold))) {
+            if (kmerCoverageEntry.getValue() <= Byte.valueOf((byte)Math.max(1, threshold))) {
                 kmersToRemove.add(kmer);
                 numToRemove++;
             }
-            if (numToRemove >= 500000 && kmerCoverageMap.keySet().size() > 1000000) {
+            if (numToRemove >= 500000 && kmerCoverageMapKmerCount > 1000000) {
                 break; // otherwise we are getting too close to the memory limit
             }
         }
@@ -496,8 +498,6 @@ public class DeBruijnKmers {
             //System.out.println("Called putKmerReadAndIndexPairForKmerString with " + kmer + ")");
             kmerReadAndIndexPair = putKmerReadAndIndexPairForKmerString(kmer, readIdx, offset);
 
-            int[] kmerReadAndIndexPairInt = GenomeSequenceEncodingUtil.decodeKmerBytesToIntArray(kmerReadAndIndexPair);
-
             int count = ((int)kmerCoverageMap.getOrDefault(ValueComparedByteArray.from(kmerReadAndIndexPair), (byte)0)) + 1;
 
             totalReadCoverageAdded++;
@@ -617,13 +617,10 @@ public class DeBruijnKmers {
             throw new NotInitializedException("kmerCoverageMap is not yet loaded. setupFromReadStringsAndSpecifiedK must be called before this method.");
         }
 
-        int numDistinctKmers = kmerCoverageMap.keySet().size();
-
         kmerHashCodeToReadIndexAndSubstringIndexMap = null; // no longer needed! (we will replace it with (k-1)-mers in the map as we break kmers observed into nodes for prefix and suffix)
         //System.gc();
         kmerHashCodeToReadIndexAndSubstringIndexMap = new HashMap<Integer, List<ValueComparedByteArray>>();
 
-        // similar to what I did after splitting the text into K-mers in DeBruijnString.java ("4. Construct the de Bruijn Graph of a String")
         // except here we do not handle kmer strings explicitly (redundant; requires too much memory) so bit more complicated to handle indices only (and replace indices with first place it occurs so that indices are unique even if the kmer occurs across many reads).
         int numKmersChecked = 0;
         int numKmersToCheck = kmerCoverageMap.keySet().size();
@@ -698,25 +695,25 @@ public class DeBruijnKmers {
         return debruijnMap;
     }
 
-    class NotInitializedException extends RuntimeException {
+    static class NotInitializedException extends RuntimeException {
         public NotInitializedException(String message) {
             super(message);
         }
     }
 
-    class CorruptedReadIndexAndSubstringIndexMapException extends RuntimeException {
+    static class CorruptedReadIndexAndSubstringIndexMapException extends RuntimeException {
         public CorruptedReadIndexAndSubstringIndexMapException(String message) {
             super(message);
         }
     }
 
-    class OutOfRangeReadIndexException extends RuntimeException {
+    static class OutOfRangeReadIndexException extends RuntimeException {
         public OutOfRangeReadIndexException(String message) {
             super(message);
         }
     }
 
-    class OutOfRangeReadOffsetException extends RuntimeException {
+    static class OutOfRangeReadOffsetException extends RuntimeException {
         public OutOfRangeReadOffsetException(String message) {
             super(message);
         }

@@ -21,7 +21,7 @@ package org.wbdbga;
 import java.util.*;
 
 /**
-   Class returned to score alignments, such as the overlap alignment used to remove overlapping redundant content in the tips of contigs from circular sequences, or if attempting to join de Bruijn contigs using dynamic programming based overlap alignment as a finishing step is enabled. See OverlapAlignmentTest#overlapAlignTestWithoutErrors or #overlapAlignTestWithErrors for an illustration of how this result works and can be used.
+   Class returned to score alignments, such as the overlap alignment used to remove overlapping redundant content in the tips of contigs from circular sequences. See OverlapAlignmentTest#overlapAlignTestWithoutErrors or #overlapAlignTestWithErrors for an illustration of how this result works and can be used.
 
    @see org.wbdbga.OverlapAlignment#align
    @see org.wbdbga.DeBruijnGenomeAssembler#removeCircularEndOverlapOnContigsAndConvertToStrings 
