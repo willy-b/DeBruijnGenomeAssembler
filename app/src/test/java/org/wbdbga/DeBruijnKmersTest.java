@@ -188,7 +188,7 @@ class DeBruijnKmersTest {
         // note this would be freed up at the end of setupFromReadStringsAndSpecifiedK, but we disabled that via freeKmerHashCodeToReadIndexAndSubstringIndexMapAtEndOfSetup
         assertNotNull(dbk.getKmerReadAndIndexPairForKmerString(expectedKmer));
         assertEquals(2, dbk.kmerCoverageMap.keySet().size()); // 1 key for TTTTT, 1 key for AAAAA
-        // note that collisions are expected and allowed in the hashCode keyed map and handled manually by having the value be an array (we cannot have a keySet of kmer strings due to excess memory requirement but need constant time lookup by string to dedupe across reads the kmer strings), when lookups occur, the actual kmer key is always compared, see the implementation of getKmerReadAndIndexPairForKmerString
+        // note that collisions are expected and allowed in the hashCode keyed map and handled manually by having the value be an array (we cannot have a keySet of kmer strings due to excess memory requirement but need constant time lookup by string to dedupe across reads the kmer strings), when lookups occur, the actual kmer key is always compared, see the implementation of getKmerReadAndIndexPairForKmerString , or the existing unit tests like getKmerReadAndIndexPairForKmerStringExistingEntriesForHashcode
         assertEquals(2, dbk.kmerHashCodeToReadIndexAndSubstringIndexMap.keySet().size());
         // then we remove this key from kmerHashCodeToReadIndexAndSubstringIndexMap (there is not a collision in this case so we can do it this way in this unit test)
         // this may seem artificial but we are checking that this method does not fail if something else drops the low coverage kmer directly,
