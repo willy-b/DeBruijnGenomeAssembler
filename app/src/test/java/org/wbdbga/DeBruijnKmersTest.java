@@ -142,7 +142,7 @@ class DeBruijnKmersTest {
     }
 
     @Test
-    void unloadRead() throws Exception {
+    void unloadRead() {
         DeBruijnKmers dbk = new DeBruijnKmers();
         assertNull(dbk.kmerCoverageMap);
         int k = 5;
@@ -170,6 +170,66 @@ class DeBruijnKmersTest {
     }
 
     @Test
+    void unloadReadWhenUnloadedReadIsTheDefiningReadButNoEntryInKmerHashCodeToReadIndexAndSubstringIndexMapProceedsWithoutFailing() {
+        // same setup as the last unit test
+        DeBruijnKmers dbk = new DeBruijnKmers();
+        assertNull(dbk.kmerCoverageMap);
+        int k = 5;
+        String baseRead = "TTTTTT"; // 0th read - present during `dbk.setupFromReadStringsAndSpecifiedK(k, reads);` call
+        String firstRead = "AAAAAA"; // 1st read - present during `dbk.setupFromReadStringsAndSpecifiedK(k, reads);` call
+        String expectedKmer = "AAAAA";
+        byte[] expectedKmerReadAndIndexPairRaw = GenomeSequenceEncodingUtil.get4ByteRepresentationForReadIndexAndWithinReadIndex(1, 0);
+        List reads = new ArrayList();
+        reads.add(GenomeSequenceEncodingUtil.getBPBytesFromString(baseRead));
+        reads.add(GenomeSequenceEncodingUtil.getBPBytesFromString(firstRead));
+        dbk.freeKmerHashCodeToReadIndexAndSubstringIndexMapAtEndOfSetup = false;
+        dbk.disableTrieCorrections = true;
+        dbk.setupFromReadStringsAndSpecifiedK(k, reads);
+        // note this would be freed up at the end of setupFromReadStringsAndSpecifiedK, but we disabled that via freeKmerHashCodeToReadIndexAndSubstringIndexMapAtEndOfSetup
+        assertNotNull(dbk.getKmerReadAndIndexPairForKmerString(expectedKmer));
+        assertEquals(2, dbk.kmerCoverageMap.keySet().size()); // 1 key for TTTTT, 1 key for AAAAA
+        // note that collisions are expected and allowed in the hashCode keyed map and handled manually by having the value be an array (we cannot have a keySet of kmer strings due to excess memory requirement but need constant time lookup by string to dedupe across reads the kmer strings), when lookups occur, the actual kmer key is always compared, see the implementation of getKmerReadAndIndexPairForKmerString
+        assertEquals(2, dbk.kmerHashCodeToReadIndexAndSubstringIndexMap.keySet().size());
+        // then we remove this key from kmerHashCodeToReadIndexAndSubstringIndexMap (there is not a collision in this case so we can do it this way in this unit test)
+        // this may seem artificial but we are checking that this method does not fail if something else drops the low coverage kmer directly,
+        dbk.kmerHashCodeToReadIndexAndSubstringIndexMap.remove("AAAAA".hashCode()); // we can remove "AAAAA" as if the low coverage kmer had already been dropped and also unload that read
+        int coverageRemoved = dbk.unloadRead(1);
+        assertEquals(2, coverageRemoved); // 2x AAAAA (Ax5) in AAAAAA (Ax6) 
+        // So again, more coverage can be reported as removed in the current implementation than is registered as existing because we allow dropping of low coverage kmers AND unloading of them again with the reads. If kmers are not dropped by e.g. removeLowCoverageKmers, and unloadReads is only called 1x per read, then coverage removed by unloadReads will balance with updates to read coverage in kmerCoverageMap, otherwise it will not necessarily balance as no such balance is assumed (making sure readers do not assume it).
+        assertEquals(1, dbk.kmerCoverageMap.keySet().size()); // 1 key for TTTTT
+        assertNull(dbk.getKmerReadAndIndexPairForKmerString(expectedKmer));
+    }
+
+    @Test
+    void unloadReadCanUpdateCoverageForAReadWhenNotRemovingTheDefiningReadOrOnlyReadForThatKmer() {
+        // same setup as the last unit test
+        DeBruijnKmers dbk = new DeBruijnKmers();
+        assertNull(dbk.kmerCoverageMap);
+        int k = 5;
+        String baseRead = "TTTTTT"; // 0th read
+        String firstRead = "AAAAAA"; // 1st read
+        // 2nd read, means "AAAAA" is covered by multiple reads,
+        // we will in this test unload the 2nd read which is not where "AAAAA" was originally defined
+        String secondRead = "AAAAAA";
+        String expectedKmer = "AAAAA";
+        byte[] expectedKmerReadAndIndexPairRaw = GenomeSequenceEncodingUtil.get4ByteRepresentationForReadIndexAndWithinReadIndex(1, 0);
+        List reads = new ArrayList();
+        reads.add(GenomeSequenceEncodingUtil.getBPBytesFromString(baseRead));
+        reads.add(GenomeSequenceEncodingUtil.getBPBytesFromString(firstRead));
+        reads.add(GenomeSequenceEncodingUtil.getBPBytesFromString(secondRead));
+        dbk.freeKmerHashCodeToReadIndexAndSubstringIndexMapAtEndOfSetup = false;
+        dbk.disableTrieCorrections = true;
+        dbk.setupFromReadStringsAndSpecifiedK(k, reads);        
+        assertEquals(2, dbk.kmerCoverageMap.keySet().size()); // 1 key for TTTTT, 1 key for AAAAA
+        int coverageRemoved = dbk.unloadRead(2);
+        // adding assertions here shortly
+        assertEquals(2, coverageRemoved); // 2x AAAAA (Ax5) in AAAAAA (Ax6)
+        // however in this case this kmer should still have read coverage 2, and still be present
+        assertEquals(2, dbk.kmerCoverageMap.keySet().size()); // 1 key for TTTTT, 1 key for AAAAA, compare to unloadRead() test where this was reduced to 1 key
+        assertNotNull(dbk.getKmerReadAndIndexPairForKmerString(expectedKmer));
+    }
+
+    @Test
     void getKmerReadAndIndexPairForKmerStringNoExistingEntries() {
         DeBruijnKmers dbk = new DeBruijnKmers();
         byte[] kmerReadAndIndexPair = dbk.getKmerReadAndIndexPairForKmerString("AAA");
@@ -192,6 +252,15 @@ class DeBruijnKmersTest {
                 byte[] kmerReadAndIndexPairRetrieved = dbk.getKmerReadAndIndexPairForKmerString("AAA");
             });
         assertEquals("getKmerReadAndIndexPairForKmerString has been called on a DeBruijnKmers instance that has not been properly initialized; please ensure setupFromReadStringsAndSpecifiedK is called first and that DeBruijnKmers.reads is not being set to null", exception.getMessage());
+    }
+
+    @Test
+    void putKmerReadAndIndexPairForKmerStringThrowsNotInitializedExceptionIfNotInitialized() {
+        DeBruijnKmers dbk = new DeBruijnKmers();
+        DeBruijnKmers.NotInitializedException exception = assertThrows(DeBruijnKmers.NotInitializedException.class, () -> {
+                byte[] kmerReadAndIndexPair = dbk.putKmerReadAndIndexPairForKmerString("AAA", 0, 1);        
+            });
+        assertEquals("putKmerReadAndIndexPairForKmerString has been called on a DeBruijnKmers instance that has not been properly initialized; please ensure setupFromReadStringsAndSpecifiedK is called first and that DeBruijnKmers.reads is not being set to null", exception.getMessage());
     }
 
     @Test

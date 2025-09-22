@@ -135,4 +135,17 @@ class GenomeSequenceEncodingUtilTest {
     void getReadIndexAndWithinReadIndexFrom4ByteRepresentation() {
         assertArrayEquals(new int[]{64, 32}, GenomeSequenceEncodingUtil.getReadIndexAndWithinReadIndexFrom4ByteRepresentation(new byte[]{(byte)0b01000000, (byte)0, (byte)0, (byte)0b00100000}));
     }
+
+    @Test
+    void decodeKmerBytesToIntArray() {
+        assertArrayEquals(new int[]{64, 32}, GenomeSequenceEncodingUtil.decodeKmerBytesToIntArray(new byte[]{(byte)0b01000000, (byte)0, (byte)0, (byte)0b00100000}));
+    }
+
+    @Test
+    void decodeKmerBytesToIntArrayThrowsExceptionIfTheNumberOfBytesIsNot4() {
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+                GenomeSequenceEncodingUtil.decodeKmerBytesToIntArray(new byte[]{(byte)0b01000000, (byte)0, (byte)0, (byte)0b00100000, (byte)0});
+            });
+        assertEquals("Paired reads or other usecases for kmer bytes of length 5 or otherwise not length 4 are not currently supported!", exception.getMessage());
+    }
 }
