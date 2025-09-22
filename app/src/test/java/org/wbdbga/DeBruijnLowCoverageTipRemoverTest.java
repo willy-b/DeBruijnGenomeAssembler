@@ -184,7 +184,58 @@ class DeBruijnLowCoverageTipRemoverTest {
         assertEquals(1, dbg.indegree[0]);// indegree unchanged
     }
 
-    // incoming tip (can be some overlap with these and simple bubble removal cases)
+    @Test
+    public void removeNodeAtTipAndReturnNextNodeIdxThrowsBackAdjacencyEntryCorruptedExceptionIfBackAdjacencyEntryIsCorrupted() {
+        DeBruijnGraph dbg = DeBruijnGraphTest.setupDeBruijnGraphForTests();
+        // Above method generates a DBG for a single 6 bp read with 2 k=5 kmers:
+        // "AAAAA", "AAAAT" // 2 kmers
+        // thus the (k-1)mers 4mers for the De Bruijn graph nodes are:
+        // AAAA-AAAA, AAAA-AAAT -> 1 k-1mer with two suffixes, 2 unique k-1 mers overall
+        // (an example of the case where there are fewer (k-1)-mers than kmers which is not always the case (e.g. AATAAA would not have this property, and has 2 kmers that translate to two one-to-one (k-1)-mers))
+        // AAAA is not a tip (index 0) (as it has the cycle ...->AAAA->AAAA->AAAA->...), AAAT is a tip (index 1)
+        DeBruijnLowCoverageTipRemover tp = new DeBruijnLowCoverageTipRemover(dbg);
+        assertEquals(2, dbg.numEdges);
+        assertTrue(tp.isTip(1));
+        assertEquals(1, dbg.indegree[1]);
+        assertEquals(0, dbg.outdegree[1]);
+        assertEquals(2, dbg.outdegree[0]);
+
+        // corrupt the BackAdjacency entry on purpose
+        dbg.backAdjacency[1].clear(); // should never happen but we want a meaningful error message if we break the data structure e.g. during local development
+        DeBruijnLowCoverageTipRemover.BackAdjacencyEntryCorruptedException exception = assertThrows(DeBruijnLowCoverageTipRemover.BackAdjacencyEntryCorruptedException.class, () -> {
+           int nextNodeIdx = tp.removeNodeAtTipAndReturnNextNodeIdx(1);
+        });
+        assertEquals("indegree is one but backAdjacency does not have exactly one entry for nodeIdx==1", exception.getMessage());
+    }
+
+    @Test
+    public void removeNodeAtTipAndReturnNextNodeIdxThrowsParentNodeAdjacencyEntryForChildMissingException() {
+        DeBruijnGraph dbg = DeBruijnGraphTest.setupDeBruijnGraphForTests();
+        // Above method generates a DBG for a single 6 bp read with 2 k=5 kmers:
+        // "AAAAA", "AAAAT" // 2 kmers
+        // thus the (k-1)mers 4mers for the De Bruijn graph nodes are:
+        // AAAA-AAAA, AAAA-AAAT -> 1 k-1mer with two suffixes, 2 unique k-1 mers overall
+        // (an example of the case where there are fewer (k-1)-mers than kmers which is not always the case (e.g. AATAAA would not have this property, and has 2 kmers that translate to two one-to-one (k-1)-mers))
+        // AAAA is not a tip (index 0) (as it has the cycle ...->AAAA->AAAA->AAAA->...), AAAT is a tip (index 1)
+        DeBruijnLowCoverageTipRemover tp = new DeBruijnLowCoverageTipRemover(dbg);
+        assertEquals(2, dbg.numEdges);
+        assertTrue(tp.isTip(1));
+        assertEquals(1, dbg.indegree[1]);
+        assertEquals(0, dbg.outdegree[1]);
+        assertEquals(2, dbg.outdegree[0]);
+
+        // manually clear the parent adjacency pointing forward to the child being removed
+        // should never happen but we want a meaningful error message if we break the data structure e.g. during local development
+        assertEquals(2, dbg.adjacency[0].size()); // points to itself and to node 1
+        assertNotEquals(-1, dbg.adjacency[0].indexOf(Integer.valueOf(1)));
+        dbg.adjacency[0].remove(dbg.adjacency[0].indexOf(Integer.valueOf(1))); // remove pointer from node 0 to node 1 (which may be at index 0 or 1 of its adjacency list)
+        assertEquals(1, dbg.adjacency[0].size()); // now just points to itself
+
+        DeBruijnLowCoverageTipRemover.ParentNodeAdjacencyEntryForChildMissingException exception = assertThrows(DeBruijnLowCoverageTipRemover.ParentNodeAdjacencyEntryForChildMissingException.class, () -> {
+           int nextNodeIdx = tp.removeNodeAtTipAndReturnNextNodeIdx(1);
+        });
+        assertEquals("could not find reference to this node in parent adjacency", exception.getMessage());
+    }
 
     @Test
     public void solveVeryBasicCaseIncomingTip() {
