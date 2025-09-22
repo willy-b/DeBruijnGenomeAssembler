@@ -28,7 +28,7 @@ Miller, J. R., Koren, S., Sutton, G. (2010). Assembly algorithms for next-genera
 public final class DeBruijnLowCoverageTipRemover {
     boolean VERBOSE = false;
     DeBruijnGraph dbg;
-    final double RELATIVE_COVERAGE_THRESHOLD_TO_DROP_TIP_EDGES = 0.50;
+    static final double RELATIVE_COVERAGE_THRESHOLD_TO_DROP_TIP_EDGES = 0.50;
 
     /**
        Constructs a DeBruijnLowCoverageTipRemover from an initialized DeBruijnGraph. Make sure to pass a non-empty initialized DeBruijnGraph or you will get an IllegalArgumentException. Call solve() to perform the low coverage tip removal.
@@ -55,9 +55,6 @@ public final class DeBruijnLowCoverageTipRemover {
 
         for (int i = 0; i < dbg.numNodes; i++) {
             if (isTip(i)) {
-                if (VERBOSE) {
-                    //System.out.println("tip: " + dbg.nodeValues.get(i));
-                }
                 tipNodes.add(i);
             }
         }
@@ -103,9 +100,9 @@ public final class DeBruijnLowCoverageTipRemover {
     }
 
     /**
-       Removes a tip node and returns the upstream node, call this repeatedly after checking isTip to remove a low coverage branch/tip from the de Bruijn graph.
+       Removes a tip node and returns the upstream node, call this repeatedly after checking isTip to remove a low coverage branch/tip from the de Bruijn graph (returning -1 means no further nodes should be removed in this way due to reaching the coverage threshold on the edges.)
        @param nodeIdx the index of the node to remove (must be a tip node or will generate exception!)
-       @return the index of the upstream node which could be the parent or the child depending on what type of tip this is
+       @return the index of the upstream node which could be the parent or the child depending on what type of tip this is (returns -1 if tip removal was aborted, e.g. due to exceeding coverage threshold at the next node)
      */
     public int removeNodeAtTipAndReturnNextNodeIdx(int nodeIdx) {
         if (Math.max(dbg.indegree[nodeIdx], dbg.outdegree[nodeIdx]) != 1) {
@@ -119,10 +116,6 @@ public final class DeBruijnLowCoverageTipRemover {
         if (dbg.outdegree[nodeIdx] == 0) {
             if (dbg.backAdjacency[nodeIdx] == null || ((List<Integer>)dbg.backAdjacency[nodeIdx]).size() != 1) {
                 throw new BackAdjacencyEntryCorruptedException("indegree is one but backAdjacency does not have exactly one entry for nodeIdx==" + nodeIdx);
-            } else {
-                if (VERBOSE) {
-                    //System.out.println("removing " + nodeIdx + " (" + dbg.nodeValues.get(nodeIdx) + ")");
-                }
             }
 
             int parentIdx = dbg.backAdjacency[nodeIdx].get(0);
@@ -131,8 +124,7 @@ public final class DeBruijnLowCoverageTipRemover {
                 throw new ParentNodeAdjacencyEntryForChildMissingException("could not find reference to this node in parent adjacency");
             }
 
-            double averageCoverageToUse = dbg.averageReadCoverage;//(dbg.averageCoverageForRetainedEdges != null && !Double.isNaN(dbg.averageCoverageForRetainedEdges)) ? dbg.averageCoverageForRetainedEdges : dbg.averageReadCoverage;
-            //if (VERBOSE) { System.out.println("averageCoverageToUse: " + averageCoverageToUse); }
+            double averageCoverageToUse = dbg.averageReadCoverage;
             if (dbg.adjacencyCoverageCount[parentIdx].get(parentAdjacencyToThisIdx) > averageCoverageToUse * RELATIVE_COVERAGE_THRESHOLD_TO_DROP_TIP_EDGES) {
                 return -1;
             }
@@ -146,11 +138,8 @@ public final class DeBruijnLowCoverageTipRemover {
             if (dbg.adjacency[parentIdx].size() != dbg.adjacencyCoverageCount[parentIdx].size()) { throw new DeBruijnGraph.DeBruijnGraphCorruptionException("adjacency related data structures sizes do not match which should never happen"); }
             return parentIdx;
         } else {
-            if (VERBOSE) {
-                //System.out.println("removing " + nodeIdx + " (" + dbg.nodeValues.get(nodeIdx) + ")");
-            }
             int childIdx = dbg.adjacency[nodeIdx].get(0);
-            double averageCoverageToUse = dbg.averageReadCoverage;//(dbg.averageCoverageForRetainedEdges != null && !Double.isNaN(dbg.averageCoverageForRetainedEdges)) ? dbg.averageCoverageForRetainedEdges : dbg.averageReadCoverage;
+            double averageCoverageToUse = dbg.averageReadCoverage;
             if (dbg.adjacencyCoverageCount[nodeIdx].get(0) > averageCoverageToUse * RELATIVE_COVERAGE_THRESHOLD_TO_DROP_TIP_EDGES) {
                 return -1;
             }

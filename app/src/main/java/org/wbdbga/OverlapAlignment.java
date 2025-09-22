@@ -153,8 +153,12 @@ Perform overlap alignment of two strings, s and t, and return the score, the end
 
         int i = len1 - 1;
         int j = len2 - 1;
+
+        // sb1, sb2 are left in here in case someone wants to uncomment
+        // the lines later down to print out the alignment details
         StringBuilder sb1 = new StringBuilder("");
         StringBuilder sb2 = new StringBuilder("");
+
         int originateI = -1;
         int originateJ = -1;
         while (j > 0 || i > 0) {
@@ -191,6 +195,12 @@ Perform overlap alignment of two strings, s and t, and return the score, the end
                 throw new InvalidAlignmentStepChoice("Error unexpected choiceChar " + choiceChar + " at i==" + i + ", j==" + j +".");
             }
         }
+
+        // If debugging or curious about a particular alignment, it may be useful to uncomment the following two lines:
+        // ```
+        // System.out.println("aligned s: " + sb1);
+        // System.out.println("aligned t: " + sb2);
+        // ```
 
         // For e.g. s shorter than t, alignment beginning after the end of s means it did not align
         // subtract extra 1 for " " appended in beginning

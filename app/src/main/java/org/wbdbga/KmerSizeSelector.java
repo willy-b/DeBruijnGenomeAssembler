@@ -41,7 +41,7 @@ public class KmerSizeSelector {
     static final boolean VERBOSE = true;
     //final boolean PRINT_DEBRUIJN_IN_GRAPHVIZ = false;
     Integer numInputLines = null;
-    final String BEST_SOLUTION_SO_FAR_TEMPORARY_FILENAME_PREFIX = "deBruijnGraphForBestSolutionSoFarTmp";
+    static final String BEST_SOLUTION_SO_FAR_TEMPORARY_FILENAME_PREFIX = "deBruijnGraphForBestSolutionSoFarTmp";
 
     /**
        Construct a KmerSizeSelector, which can be followed by calling readInParameters(k) with your initial guess at k to load the genome reads from standard input, then solve(), then getDeBruijnGraph() to get the resulting de Bruijn graph, ready for extracting contigs using DeBruijnGraphContigSolver.
@@ -250,7 +250,6 @@ This method will read from stdin reads as 1 read per line with consistent read l
                 System.out.println("Found a candidate. k == " + k + " has n50 == " + n50 + " (NOT computed vs a reference genome but is relative to DeBruijn graph formed from reads as this is a de novo assembler).");
             }
 
-            // TODO also support commandline argument to just use the provided value and not perform a search
             if (kWithBestEstimatedN50WithoutReference == k) {
                 foundKValue = true;
                 bestDbgSoFar = dbg;
