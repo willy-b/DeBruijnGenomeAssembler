@@ -19,16 +19,19 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 package org.wbdbga;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 import java.io.PrintWriter;
+import java.io.PrintStream;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
+import java.io.ByteArrayOutputStream;
 
 class DeBruijnGraphTest {
     @Test 
@@ -261,6 +264,22 @@ class DeBruijnGraphTest {
         String invalidDbgFilename = "directory_not_existing/invalidDbg.dbg";
         DeBruijnGraph dbg = setupDeBruijnGraphForTests();
         assertFalse(DeBruijnGraph.saveToDisk(dbg, invalidDbgFilename));
+    }
+
+    private final PrintStream standardErr = System.err;
+    @AfterEach
+    public void tearDown() {
+        System.setOut(standardErr);
+    }
+
+    @Test
+    void clearFromDiskLogsAStacktraceButDoesNotThrowAnExceptionIfRequestedToDeleteAnInvalidPath() {
+        final ByteArrayOutputStream toCaptureOutputStream = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(toCaptureOutputStream));
+        DeBruijnGraph.clearFromDisk("not_existing_directory/ADeBruijnGraphThatDoesNotExist.dbg");
+        String output = toCaptureOutputStream.toString();
+        assertNotNull(output);
+        assertEquals("java.nio.file.NoSuchFileException: not_existing_directory/ADeBruijnGraphThatDoesNotExist.dbg", output.split("\n")[0]);
     }
 
     @Test

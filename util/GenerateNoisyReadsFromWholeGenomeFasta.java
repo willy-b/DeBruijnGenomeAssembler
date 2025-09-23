@@ -38,6 +38,11 @@ public class GenerateNoisyReadsFromWholeGenomeFasta {
         for (int readIdx = 0; readIdx < numReads; readIdx++) {
             // extract a read
             int readStart = (int)Math.round(this.random.nextDouble()*(sequenceLength-1));
+            // Note this generates synthetic sequencer reads with circular overlap on purpose
+            // as sequencer reads from our example datasets should have this property
+            // (e.g. definitely phi x174, carsonella ruddii, and E. coli, and I think B. brevis as well)
+            // and to show off that our assembler can correct it.
+            // A flag may be added to allow generating data without circular overlap in the near future.
             int readEnd = readStart + readLength; // can go beyond sequence length, we will sample modulo for circular sample
             StringBuffer readSb = new StringBuffer();
             for (int i = readStart; i < readEnd; i++) {

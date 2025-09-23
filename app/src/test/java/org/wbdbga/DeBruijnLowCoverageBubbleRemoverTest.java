@@ -26,7 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 class DeBruijnLowCoverageBubbleRemoverTest {
-
     @Test
     void deBruijnLowCoverageBubbleRemoverConstructor() {
         DeBruijnGraph dbg = DeBruijnGraphTest.setupDeBruijnGraphForTests();
