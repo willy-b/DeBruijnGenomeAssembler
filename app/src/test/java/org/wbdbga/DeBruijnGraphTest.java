@@ -269,7 +269,7 @@ class DeBruijnGraphTest {
     private final PrintStream standardErr = System.err;
     @AfterEach
     public void tearDown() {
-        System.setOut(standardErr);
+        System.setErr(standardErr);
     }
 
     @Test
