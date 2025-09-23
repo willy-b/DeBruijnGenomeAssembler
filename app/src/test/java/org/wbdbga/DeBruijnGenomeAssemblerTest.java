@@ -244,8 +244,14 @@ class DeBruijnGenomeAssemblerTest {
     }
 
     // DNA sequence example for circularity corrections, might as well use a real eccDNA sequence so took the shortest one I could find in NIH NUCCORE:
-    // {eccDNA 80, extrachromosomal circular DNA} [human, HeLa S3 cells, Genomic, 394 nt, but includes overlap, I use 388nt sequence from paper Fig 1 and Results section 1] (https://www.ncbi.nlm.nih.gov/nuccore/S71553.1)
-    // A real extrachromosomal circular human DNA example from van Loon, N., Miller, D., & Murnane, J. P. (1994). Formation of extrachromosomal circular DNA in HeLa cells by nonhomologous recombination. Nucleic acids research, 22(13), 2447–2452. https://doi.org/10.1093/nar/22.13.2447 , not from a healthy cell, except with the one "N" (unknown) replaced with "T":
+    // (Note that the phi x174, Carsonella ruddii, and E. coli genomes used as examples in this repo (see util/README.md) are all circular genomes as well.)
+    // {eccDNA 80, extrachromosomal circular DNA} [human, HeLa S3 cells, Genomic, 394 nt, but includes overlap, I use 388nt sequence from paper Fig 1 and Results section 1] 
+    // (https://www.ncbi.nlm.nih.gov/nuccore/S71553.1)
+    // A real extrachromosomal circular human DNA example from 
+    // van Loon, N., Miller, D., & Murnane, J. P. (1994). Formation of extrachromosomal circular DNA in HeLa cells by nonhomologous recombination. Nucleic acids research, 22(13), 2447–2452. https://doi.org/10.1093/nar/22.13.2447 ,
+    // (not from a healthy cell in this case), except with the one "N" replaced with "T" 
+    // (for https://www.ncbi.nlm.nih.gov/nuccore/S71553.1 , "N" is unknown/gap, see Nuccore/Nucleotide FAQ linked from https://www.ncbi.nlm.nih.gov/nuccore , https://www.ncbi.nlm.nih.gov/books/NBK49541/#NucProtFAQ.3_why_are_there_ns_in_nucleot , archived at https://web.archive.org/web/20250508030240/https://www.ncbi.nlm.nih.gov/books/NBK49541/#NucProtFAQ.3_why_are_there_ns_in_nucleot  ),
+    // since the content of the missing base/gap is not relevant for our purpose (we could have used any random sequence circularly sampled for this example):
     final static String eccDNA80FromHeLaS3 = "AATTCAAAGGTGTCTCTAATCCTCTTCCACTGAACCTCTTGCTGTAACAGGCAAGGATCCTCTGCCAGGCAGCCTTGAGCCCAGACGAGGGGAAACCTGACTATACTCCGTGCATGATTTTCCCCAATAGCTTTCTTTATTGAGATAATTTCATTGTTGTTGAAGGAGAGGTAGAGGTGTTCTCAAGCCCACTGAGGGAAAGGGTTTGGCTTATTTGGGGGAAAACATGTAGTGGAGAATGTAGGGGGAGGATGTGGGAAGATGGTCCTCGAAATGCAGGCAGGCAGACCAACCAAGAAGGCCTTACTATATGCCTTGTTGAGTCTGGAGTTTATGCATGTGGGAAGTTAGGATCCAAACTTACACAATTTTCACATGATAGAAGTGG";
     // (But small eccDNAs do also occur naturally in healthy human cells see Møller, H.D., Mohiyuddin, M., Prada-Luengo, I. et al. Circular DNA elements of chromosomal origin are common in healthy human somatic tissue. Nat Commun 9, 1069 (2018). https://doi.org/10.1038/s41467-018-03369-8 .)
 
